@@ -15,6 +15,7 @@ export declare class PdfViewerComponent implements OnChanges, OnInit, OnDestroy,
     static CSS_UNITS: number;
     static BORDER_WIDTH: number;
     pdfViewerContainer: ElementRef<HTMLDivElement>;
+    transformWrapper: ElementRef<HTMLDivElement>;
     eventBus: PDFJSViewer.EventBus;
     pdfLinkService: PDFJSViewer.PDFLinkService;
     pdfFindController: PDFJSViewer.PDFFindController;

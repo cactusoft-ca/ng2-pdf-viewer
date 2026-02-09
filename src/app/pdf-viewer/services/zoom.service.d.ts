@@ -14,7 +14,9 @@ export declare class ZoomService implements OnDestroy {
     set zoom(value: number);
     get zoom(): number;
     private wheelHandler;
-    initSettings(container: HTMLElement, isWheelZoom: boolean, isWheelCtrlZoom: boolean): void;
+    private transformWrapper;
+    private transientScale;
+    initSettings(container: HTMLElement, transformWrapper: HTMLElement, isWheelZoom: boolean, isWheelCtrlZoom: boolean): void;
     limitZoom(): void;
     private zoomAtCursor;
     private onTouchStart;
