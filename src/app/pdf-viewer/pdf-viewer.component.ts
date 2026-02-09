@@ -74,7 +74,9 @@ export const enum RenderTextMode {
       (mouseleave)="panService.endPan(pdfViewerContainer)"
       (mousemove)="panService.pan($event, pdfViewerContainer)"
     >
-      <div class="pdfViewer"></div>
+      <div #transformWrapper class="pdf-transform-wrapper">
+        <div class="pdfViewer"></div>
+      </div>
     </div>
   `,
   styleUrls: ['./pdf-viewer.component.scss'],
@@ -88,6 +90,7 @@ export class PdfViewerComponent
 
   @ViewChild('pdfViewerContainer')
   pdfViewerContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('transformWrapper') transformWrapper!: ElementRef<HTMLDivElement>;
 
   eventBus!: PDFJSViewer.EventBus;
   pdfLinkService!: PDFJSViewer.PDFLinkService;
@@ -332,8 +335,9 @@ export class PdfViewerComponent
   ngAfterViewInit(): void {
     this.zoomService.initSettings(
       this.pdfViewerContainer?.nativeElement,
+      this.transformWrapper?.nativeElement,
       this.isWheelZoom,
-      this.isWheelCtrlZoom
+      this.isWheelCtrlZoom,
     );
   }
 
@@ -396,7 +400,7 @@ export class PdfViewerComponent
         next: ([page]: [PDFPageProxy, void]) => {
           if (this.isOptimizeZoom || this.isWheelZoom) {
             this.zoomService.saveScrollPosition(
-              this.pdfViewerContainer?.nativeElement
+              this.pdfViewerContainer?.nativeElement,
             );
           }
 
@@ -431,7 +435,7 @@ export class PdfViewerComponent
 
           if (this.isOptimizeZoom || this.isWheelZoom) {
             this.zoomService.restoreScrollPosition(
-              this.pdfViewerContainer?.nativeElement
+              this.pdfViewerContainer?.nativeElement,
             );
           }
 
@@ -464,7 +468,7 @@ export class PdfViewerComponent
 
   private getPDFLinkServiceConfig(): {} {
     const linkTarget = PdfViewerComponent.getLinkTarget(
-      this._externalLinkTarget
+      this._externalLinkTarget,
     );
 
     if (linkTarget) {
@@ -549,7 +553,7 @@ export class PdfViewerComponent
       this.pdfViewer = new PDFJSViewer.PDFViewer(this.getPDFOptions());
     } else {
       this.pdfViewer = new PDFJSViewer.PDFSinglePageViewer(
-        this.getPDFOptions()
+        this.getPDFOptions(),
       );
     }
     this.pdfLinkService.setViewer(this.pdfViewer);
@@ -659,7 +663,7 @@ export class PdfViewerComponent
     ) {
       // wait until at least the first page is available.
       this.pdfViewer.firstPagePromise?.then(
-        () => (this.pdfViewer.pagesRotation = this._rotation)
+        () => (this.pdfViewer.pagesRotation = this._rotation),
       );
     }
 
@@ -703,7 +707,7 @@ export class PdfViewerComponent
       case 'page-fit':
         ratio = Math.min(
           pdfContainerHeight / viewportHeight,
-          pdfContainerWidth / viewportWidth
+          pdfContainerWidth / viewportWidth,
         );
         break;
       case 'page-height':
@@ -744,7 +748,7 @@ export class PdfViewerComponent
         .pipe(
           debounceTime(100),
           filter(() => this._canAutoResize && !!this._pdf),
-          takeUntil(this.destroy$)
+          takeUntil(this.destroy$),
         )
         .subscribe(() => {
           this.updateSize();

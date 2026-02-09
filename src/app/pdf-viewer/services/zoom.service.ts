@@ -18,7 +18,7 @@ export class ZoomService implements OnDestroy {
 
   // Debounce to prevent rapid-fire updates during continuous zoom
   triggerUpdateSize$ = this.triggerUpdateSizeInternal$.pipe(
-    debounceTime(10) // Wait after last zoom before updating
+    debounceTime(10), // Wait after last zoom before updating
   );
 
   set zoom(value: number) {
@@ -31,12 +31,16 @@ export class ZoomService implements OnDestroy {
   }
 
   private wheelHandler: ((e: WheelEvent) => void) | null = null;
+  private transformWrapper: HTMLElement | null = null;
+  private transientScale = 1;
 
   initSettings(
     container: HTMLElement,
+    transformWrapper: HTMLElement,
     isWheelZoom: boolean,
-    isWheelCtrlZoom: boolean
+    isWheelCtrlZoom: boolean,
   ): void {
+    this.transformWrapper = transformWrapper;
     this.removeListeners(container);
 
     this.wheelHandler = (e: WheelEvent) => {
@@ -90,30 +94,41 @@ export class ZoomService implements OnDestroy {
 
   private onTouchMove = (event: TouchEvent): void => {
     if (this.isPinching && event.touches.length === 2) {
-      event.preventDefault(); // prevent scroll or native zoom
+      event.preventDefault();
 
       const currentDistance = this.getDistance(
         event.touches[0],
-        event.touches[1]
+        event.touches[1],
       );
 
-      if (this.lastDistance !== 0) {
-        const scaleChange = currentDistance / this.lastDistance;
+      if (this.lastDistance !== 0 && this.transformWrapper) {
+        // Calculate the temporary CSS scale relative to the CURRENT library zoom
+        this.transientScale = currentDistance / this.lastDistance;
 
-        this.zoom *= scaleChange;
-        this.limitZoom();
-        this.lastDistance = currentDistance;
-        this.triggerUpdateSizeInternal$.next();
+        // Apply CSS transform for native-speed visual feedback
+        this.transformWrapper.style.transform = `scale(${this.transientScale})`;
       }
     }
   };
 
   private onTouchEnd = (event: TouchEvent): void => {
-    if (event.touches.length < 2) {
-      event.preventDefault(); // prevent scroll or native zoom
+    if (this.isPinching && event.touches.length < 2) {
+      event.preventDefault();
+
+      // Finalize the zoom in the library
+      if (this.transientScale !== 1) {
+        this.zoom *= this.transientScale;
+        this.limitZoom();
+      }
+
+      // RESET CSS transform so the library can take over rendering
+      if (this.transformWrapper) {
+        this.transformWrapper.style.transform = 'scale(1)';
+      }
 
       this.isPinching = false;
       this.lastDistance = 0;
+      this.transientScale = 1;
     }
   };
 
